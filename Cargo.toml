@@ -14,3 +14,10 @@ name = "serve-hbs"
 path = "src/main.rs"
 
 [dependencies]
+structopt = "0.3.14"
+anyhow = "1.0.28"
+tokio = { version = "0.2.20", features = ["macros", "rt-threaded"] }
+warp = "0.2.2"
+http = "0.2.1"
+log = "0.4.8"
+env_logger = "0.7.1"
