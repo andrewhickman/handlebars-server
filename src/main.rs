@@ -1,5 +1,6 @@
 mod server;
 mod template;
+mod value;
 
 use std::path::PathBuf;
 
@@ -25,9 +26,12 @@ async fn main() -> Result<()> {
     let options = Options::from_args();
     log::debug!("{:#?}", options);
 
+    log::info!("Reading JSON value from stdin");
+    let value_rx = value::receiver()?;
+
     server::run(
         &options.server,
-        template(&options.base)?
+        template(&options.base, value_rx)?
             .or(warp::fs::dir(options.base))
             .with(warp::log(module_path!())),
     )
