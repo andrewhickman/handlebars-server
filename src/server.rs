@@ -2,7 +2,6 @@ use std::net::{SocketAddr, ToSocketAddrs};
 
 use anyhow::{Context, Result};
 use structopt::StructOpt;
-use warp::reject::Rejection;
 
 #[derive(Debug, StructOpt)]
 pub struct Options {
@@ -26,7 +25,7 @@ pub struct Options {
 
 pub async fn run<F>(options: &Options, filter: F) -> anyhow::Result<()>
 where
-    F: warp::Filter<Error = Rejection> + Clone + Send + Sync + 'static,
+    F: warp::Filter<Error = warp::Rejection> + Clone + Send + Sync + 'static,
     F::Extract: warp::Reply,
 {
     let addr = options.resolve_hostname()?;

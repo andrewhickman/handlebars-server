@@ -1,21 +1,20 @@
 mod server;
+mod template;
 
 use std::path::PathBuf;
 
 use structopt::StructOpt;
 
 use anyhow::Result;
-use warp::Filter;
+use warp::Filter as _;
+
+use self::template::template;
 
 #[derive(Debug, StructOpt)]
 pub struct Options {
     #[structopt(flatten)]
     server: server::Options,
-    #[structopt(
-        value_name = "BASE_DIR",
-        help = "Base directory to serve from",
-        parse(from_os_str)
-    )]
+    #[structopt(value_name = "BASE_DIR", help = "Base directory", parse(from_os_str))]
     base: PathBuf,
 }
 
@@ -28,7 +27,9 @@ async fn main() -> Result<()> {
 
     server::run(
         &options.server,
-        warp::fs::dir(options.base).with(warp::log(module_path!())),
+        template(&options.base)?
+            .or(warp::fs::dir(options.base))
+            .with(warp::log(module_path!())),
     )
     .await
 }
