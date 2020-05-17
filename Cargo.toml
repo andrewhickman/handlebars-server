@@ -1,13 +1,14 @@
 [package]
 name = "handlebars-server"
 description = "A simple server that generates HTML at runtime."
-version = "0.0.0"
+version = "1.0.0"
 authors = ["Andrew Hickman <andrew.hickman1@sky.com>"]
 repository = "https://github.com/andrewhickman/handlebars-server"
 documentation = "https://docs.rs/handlebars-server"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 edition = "2018"
+build = "build.rs"
 
 [[bin]]
 name = "serve-hbs"
@@ -29,3 +30,7 @@ urlencoding = "1.0.0"
 once_cell = "1.4.0"
 serde_json = "1.0.53"
 futures = "0.3.5"
+clap = "2.33.1"
+
+[build-dependencies]
+vergen = "3.1.0"
