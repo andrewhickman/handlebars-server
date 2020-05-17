@@ -1,3 +1,4 @@
+mod reload;
 mod server;
 mod template;
 mod value;
@@ -9,6 +10,7 @@ use structopt::StructOpt;
 use anyhow::Result;
 use warp::Filter as _;
 
+use self::reload::reload;
 use self::template::template;
 
 #[derive(Debug, StructOpt)]
@@ -31,7 +33,8 @@ async fn main() -> Result<()> {
 
     server::run(
         &options.server,
-        template(&options.base, value_rx)?
+        reload(value_rx.clone())
+            .or(template(&options.base, value_rx)?)
             .or(warp::fs::dir(options.base))
             .with(warp::log(module_path!())),
     )
