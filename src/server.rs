@@ -37,7 +37,8 @@ where
         .with_context(|| format!("failed to bind to `{}`", addr))?;
     log::info!("listening on http://{}", addr);
 
-    Ok(run.await)
+    run.await;
+    Ok(())
 }
 
 impl Options {
