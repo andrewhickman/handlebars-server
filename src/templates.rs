@@ -6,27 +6,29 @@ use fn_error_context::context;
 use handlebars::{Handlebars, TemplateFileError};
 use tokio::sync::{broadcast, RwLock};
 
-#[context("failed to load templates from directory: `{}`", path.display())]
+#[context("failed to load templates from directory: `{}`", options.base.display())]
 pub fn load(
-    path: PathBuf,
+    options: &crate::Options,
     reload_tx: broadcast::Sender<()>,
 ) -> Result<Arc<RwLock<Handlebars<'static>>>> {
-    log::info!("loading templates from directory `{}`", path.display());
-    let handlebars = load_templates(&path)?;
+    log::info!("loading templates from directory `{}`", options.base.display());
+    let handlebars = load_templates(&options.base)?;
 
     let handlebars = Arc::new(RwLock::new(handlebars));
 
-    let handlebars_clone = handlebars.clone();
-    let path_clone = path.clone();
-    if let Err(err) = crate::notify::watch(&path, move |events| {
-        on_change(
-            path_clone.clone(),
-            events,
-            reload_tx.clone(),
-            handlebars_clone.clone(),
-        )
-    }) {
-        log::error!("{:#}", err);
+    if options.watch {
+        let handlebars_clone = handlebars.clone();
+        let base = options.base.clone();
+        if let Err(err) = crate::notify::watch(&options.base, move |events| {
+            on_change(
+                base.clone(),
+                events,
+                reload_tx.clone(),
+                handlebars_clone.clone(),
+            )
+        }) {
+            log::error!("{:#}", err);
+        }
     }
 
     Ok(handlebars)

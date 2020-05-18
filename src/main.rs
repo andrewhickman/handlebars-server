@@ -30,6 +30,8 @@ pub struct Options {
     server: server::Options,
     #[structopt(value_name = "BASE_DIR", help = "Base directory", default_value = ".", parse(try_from_os_str = parse_dir))]
     base: PathBuf,
+    #[structopt(long, short, help = "Whether to watch for changes in the base directory")]
+    watch: bool,
 }
 
 fn main() {
@@ -49,7 +51,7 @@ async fn run() -> Result<()> {
 
     let (reload_tx, _) = broadcast::channel(1);
 
-    let templates = templates::load(options.base.clone(), reload_tx.clone())?;
+    let templates = templates::load(&options, reload_tx.clone())?;
 
     log::info!("reading JSON value from stdin");
     let value_rx = value::receiver(reload_tx.clone())?;
