@@ -1,6 +1,7 @@
 mod reload;
 mod server;
-mod template;
+mod templates;
+mod render;
 mod value;
 
 use std::ffi::{OsStr, OsString};
@@ -13,7 +14,7 @@ use warp::Filter as _;
 use tokio::runtime::Runtime;
 
 use self::reload::reload;
-use self::template::template;
+use self::render::render;
 
 const VERSION: &'static str = concat!(clap::crate_version!(), " (", env!("VERGEN_SHA_SHORT"), ")");
 const LONG_VERSION: &'static str = concat!(clap::crate_version!(), " (", env!("VERGEN_SHA"), ")");
@@ -44,13 +45,15 @@ async fn run() -> Result<()> {
     let options = Options::from_args();
     log::debug!("{:#?}", options);
 
-    log::info!("Reading JSON value from stdin");
+    let templates = templates::load(&options.base)?;
+
+    log::info!("reading JSON value from stdin");
     let value_rx = value::receiver()?;
 
     server::run(
         &options.server,
         reload(value_rx.clone())
-            .or(template(&options.base, value_rx)?)
+            .or(render(templates, value_rx))
             .or(warp::fs::dir(options.base))
             .with(warp::log(module_path!())),
     )

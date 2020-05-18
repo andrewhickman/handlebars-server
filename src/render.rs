@@ -1,20 +1,16 @@
-use std::path::Path;
 use std::sync::Arc;
 
-use anyhow::Result;
-use fn_error_context::context;
-use handlebars::{Handlebars, TemplateFileError};
-use serde_json::Value;
+use handlebars::Handlebars;
 use tokio::sync::watch::Receiver;
-use warp::{Filter as _, Reply as _};
+use tokio::sync::RwLock;
+use serde_json::Value;
+use warp::{Reply as _, Filter as _};
 
-pub fn template(
-    path: &Path,
+pub fn render(
+    templates: Arc<RwLock<Handlebars<'static>>>,
     value_rx: Receiver<Value>,
-) -> Result<impl warp::Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone> {
-    let templates = Arc::new(load_templates(path)?);
-
-    Ok(warp::get()
+) -> impl warp::Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
+    warp::get()
         .and(warp::path::full())
         .and_then(move |path: warp::path::FullPath| {
             let templates = templates.clone();
@@ -28,6 +24,9 @@ pub fn template(
                     Some(split) => split,
                     None => return Err(warp::reject::not_found()),
                 };
+
+                let templates = templates.read().await;
+
                 let name = match rsplit2(file, ".") {
                     Some((name, "html")) if templates.has_template(name) => name,
                     Some((_, "hbs")) => return Ok(http::StatusCode::NOT_FOUND.into_response()),
@@ -53,26 +52,7 @@ pub fn template(
 
                 Ok(warp::reply::html(result).into_response())
             }
-        }))
-}
-
-#[context("failed to load templates from directory: `{}`", path.display())]
-fn load_templates(path: &Path) -> Result<Handlebars<'static>> {
-    let mut handlebars = Handlebars::new();
-    handlebars
-        .register_templates_directory(".hbs", path)
-        .map_err(convert_template_file_error)?;
-    handlebars.set_strict_mode(true);
-    Ok(handlebars)
-}
-
-fn convert_template_file_error(err: TemplateFileError) -> anyhow::Error {
-    match err {
-        TemplateFileError::TemplateError(err) => err.into(),
-        TemplateFileError::IOError(err, path) => {
-            anyhow::Error::from(err).context(format!("failed to read file `{}`", path))
-        }
-    }
+        })
 }
 
 fn rsplit2<'a>(string: &'a str, pat: &str) -> Option<(&'a str, &'a str)> {
