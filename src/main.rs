@@ -5,11 +5,12 @@ mod value;
 
 use std::ffi::{OsStr, OsString};
 use std::path::PathBuf;
+use std::time::Duration;
 
 use structopt::{StructOpt};
-
 use anyhow::Result;
 use warp::Filter as _;
+use tokio::runtime::Runtime;
 
 use self::reload::reload;
 use self::template::template;
@@ -24,16 +25,19 @@ const LONG_VERSION: &'static str = concat!(clap::crate_version!(), " (", env!("V
 pub struct Options {
     #[structopt(flatten)]
     server: server::Options,
-    #[structopt(value_name = "BASE_DIR", help = "Base directory", parse(try_from_os_str = parse_dir))]
+    #[structopt(value_name = "BASE_DIR", help = "Base directory", default_value = ".", parse(try_from_os_str = parse_dir))]
     base: PathBuf,
 }
 
-#[tokio::main]
-async fn main() {
-    env_logger::init_from_env(env_logger::Env::new().filter_or("HANDLEBARS_SERVER_LOG", "warn"));
-    if let Err(err) = run().await {
+fn main() {
+    let mut runtime = Runtime::new().unwrap();
+
+    env_logger::init_from_env(env_logger::Env::new().filter_or("HANDLEBARS_SERVER_LOG", "info"));
+    if let Err(err) = runtime.block_on(run()) {
         log::error!("Fatal error: {:#}", err);
     }
+
+    runtime.shutdown_timeout(Duration::from_secs(0))
 }
 
 async fn run() -> Result<()> {
