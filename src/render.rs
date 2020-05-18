@@ -1,10 +1,10 @@
 use std::sync::Arc;
 
 use handlebars::Handlebars;
+use serde_json::Value;
 use tokio::sync::watch::Receiver;
 use tokio::sync::RwLock;
-use serde_json::Value;
-use warp::{Reply as _, Filter as _};
+use warp::{Filter as _, Reply as _};
 
 pub fn render(
     templates: Arc<RwLock<Handlebars<'static>>>,

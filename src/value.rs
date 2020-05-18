@@ -2,9 +2,10 @@ use std::io::stdin;
 
 use anyhow::{Error, Result};
 use serde_json::{Deserializer, Value};
+use tokio::sync::broadcast;
 use tokio::sync::watch::{channel, Receiver};
 
-pub fn receiver() -> Result<Receiver<Value>> {
+pub fn receiver(reload_tx: broadcast::Sender<()>) -> Result<Receiver<Value>> {
     let mut stream = Deserializer::from_reader(stdin()).into_iter();
 
     let initial_value = match stream.next() {
@@ -21,6 +22,7 @@ pub fn receiver() -> Result<Receiver<Value>> {
                 Ok(value) => {
                     log::info!("got updated JSON value");
                     sender.broadcast(value).ok();
+                    reload_tx.send(()).ok();
                 }
                 Err(err) => {
                     log::error!("failed to read JSON from stdin: {}", err);

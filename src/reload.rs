@@ -2,17 +2,18 @@ use std::convert::Infallible;
 
 use futures::StreamExt as _;
 use http::header::{HeaderValue, CONTENT_TYPE};
+use tokio::sync::broadcast;
 use warp::Filter as _;
 
 pub fn reload(
-    reload_stream: impl futures::Stream + Send + Sync + Clone,
+    reload_tx: broadcast::Sender<()>,
 ) -> impl warp::Filter<Extract = impl warp::Reply, Error = warp::Rejection> + Clone {
     warp::path::path("sse").and(warp::get()).and(
         warp::path::end()
             .map(move || {
                 warp::sse::reply(
-                    warp::sse::keep_alive().stream(reload_stream.clone().map(|_| {
-                        log::debug!("sending reload event");
+                    warp::sse::keep_alive().stream(reload_tx.subscribe().map(|_| {
+                        log::info!("sending reload event");
                         Result::<_, Infallible>::Ok(warp::sse::data("reload"))
                     })),
                 )

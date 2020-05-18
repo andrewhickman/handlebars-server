@@ -1,17 +1,19 @@
+mod notify;
 mod reload;
+mod render;
 mod server;
 mod templates;
-mod render;
 mod value;
 
 use std::ffi::{OsStr, OsString};
 use std::path::PathBuf;
 use std::time::Duration;
 
-use structopt::{StructOpt};
 use anyhow::Result;
-use warp::Filter as _;
+use structopt::StructOpt;
 use tokio::runtime::Runtime;
+use tokio::sync::broadcast;
+use warp::Filter as _;
 
 use self::reload::reload;
 use self::render::render;
@@ -45,14 +47,16 @@ async fn run() -> Result<()> {
     let options = Options::from_args();
     log::debug!("{:#?}", options);
 
-    let templates = templates::load(&options.base)?;
+    let (reload_tx, _) = broadcast::channel(1);
+
+    let templates = templates::load(options.base.clone(), reload_tx.clone())?;
 
     log::info!("reading JSON value from stdin");
-    let value_rx = value::receiver()?;
+    let value_rx = value::receiver(reload_tx.clone())?;
 
     server::run(
         &options.server,
-        reload(value_rx.clone())
+        reload(reload_tx)
             .or(render(templates, value_rx))
             .or(warp::fs::dir(options.base))
             .with(warp::log(module_path!())),
