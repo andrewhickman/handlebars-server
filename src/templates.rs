@@ -6,12 +6,17 @@ use fn_error_context::context;
 use handlebars::{Handlebars, TemplateFileError};
 use tokio::sync::{broadcast, RwLock};
 
+use crate::reload::ReloadKind;
+
 #[context("failed to load templates from directory: `{}`", options.base.display())]
 pub fn load(
     options: &crate::Options,
-    reload_tx: broadcast::Sender<()>,
+    reload_tx: broadcast::Sender<ReloadKind>,
 ) -> Result<Arc<RwLock<Handlebars<'static>>>> {
-    log::info!("loading templates from directory `{}`", options.base.display());
+    log::info!(
+        "loading templates from directory `{}`",
+        options.base.display()
+    );
     let handlebars = load_templates(&options.base)?;
 
     let handlebars = Arc::new(RwLock::new(handlebars));
@@ -46,7 +51,7 @@ fn load_templates(path: &Path) -> Result<Handlebars<'static>> {
 async fn on_change(
     path: PathBuf,
     events: Vec<notify::Event>,
-    reload_tx: broadcast::Sender<()>,
+    reload_tx: broadcast::Sender<ReloadKind>,
     handlebars: Arc<RwLock<Handlebars<'static>>>,
 ) {
     let mut any_modified = false;
@@ -77,7 +82,7 @@ async fn on_change(
     }
 
     if any_modified {
-        reload_tx.send(()).ok();
+        reload_tx.send(ReloadKind::Page).ok();
     }
 }
 

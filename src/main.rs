@@ -30,7 +30,11 @@ pub struct Options {
     server: server::Options,
     #[structopt(value_name = "BASE_DIR", help = "Base directory", default_value = ".", parse(try_from_os_str = parse_dir))]
     base: PathBuf,
-    #[structopt(long, short, help = "Whether to watch for changes in the base directory")]
+    #[structopt(
+        long,
+        short,
+        help = "Whether to watch for changes in the base directory"
+    )]
     watch: bool,
 }
 
