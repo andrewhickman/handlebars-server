@@ -18,8 +18,10 @@ path = "src/main.rs"
 structopt = "0.3.14"
 anyhow = "1.0.28"
 tokio = { version = "0.2.20", features = [
+    "dns",
     "macros",
     "rt-threaded",
+    "signal",
     "sync",
     "time"
 ] }
@@ -28,7 +30,6 @@ http = "0.2.1"
 log = "0.4.8"
 env_logger = "0.7.1"
 serde = { version = "1.0.106", features = ["derive"] }
-toml = "0.5.6"
 fn-error-context = "0.1.0"
 handlebars = { version = "3.0.1", features = ["dir_source"] }
 urlencoding = "1.0.0"
@@ -38,6 +39,9 @@ futures = "0.3.5"
 clap = "2.33.1"
 notify = "=5.0.0-pre.1"
 crossbeam-channel = "0.3.8"
+hyper = "0.13.6"
+rustls = "0.18.0"
+tokio-rustls = "0.14.0"
 
 [build-dependencies]
 vergen = "3.1.0"

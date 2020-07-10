@@ -3,6 +3,7 @@ mod reload;
 mod render;
 mod server;
 mod templates;
+mod tls;
 mod value;
 
 use std::ffi::{OsStr, OsString};
@@ -62,10 +63,10 @@ async fn run() -> Result<()> {
 
     server::run(
         &options.server,
-        reload(reload_tx)
+        warp::service(reload(reload_tx)
             .or(render(templates, value_rx))
             .or(warp::fs::dir(options.base))
-            .with(warp::log(module_path!())),
+            .with(warp::log(module_path!()))),
     )
     .await
 }
