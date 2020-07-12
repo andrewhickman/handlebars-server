@@ -19,8 +19,8 @@ use warp::Filter as _;
 use self::reload::reload;
 use self::render::render;
 
-const VERSION: &'static str = concat!(clap::crate_version!(), " (", env!("VERGEN_SHA_SHORT"), ")");
-const LONG_VERSION: &'static str = concat!(clap::crate_version!(), " (", env!("VERGEN_SHA"), ")");
+const VERSION: &str = concat!(clap::crate_version!(), " (", env!("VERGEN_SHA_SHORT"), ")");
+const LONG_VERSION: &str = concat!(clap::crate_version!(), " (", env!("VERGEN_SHA"), ")");
 
 /// A simple server that generates HTML at runtime, based on JSON values piped to stdin.
 #[derive(Debug, StructOpt)]
